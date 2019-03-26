@@ -4,6 +4,7 @@ import bp.demo.iot.policy.kafka.model.ContentByAgeData;
 import bp.demo.iot.policy.kafka.model.TowerCarrierPlatformData;
 import bp.demo.iot.policy.kafka.publisher.ContentByAgeDataMessagePublisher;
 import bp.demo.iot.policy.kafka.publisher.TowerCarrierPlatformDataMessagePublisher;
+import bp.demo.iot.policy.manager.exception.DuplicateResourceException;
 import bp.demo.iot.policy.manager.model.ContentByAgePolicyRule;
 import bp.demo.iot.policy.manager.model.TowerCarrierPlatformPolicyRule;
 import bp.demo.iot.policy.manager.repository.ContentByAgePolicyRuleRepository;
@@ -20,54 +21,64 @@ import org.springframework.stereotype.Service;
 import java.io.Serializable;
 import java.util.Date;
 import java.util.List;
+import java.util.Optional;
 import java.util.UUID;
+import java.util.stream.Collectors;
 
 @Service
 public class PolicyService
   implements Serializable {
 
-  @Autowired
-  private TowerCarrierPlatformPolicyRuleRepository towerCarrierPlatformPolicyRuleRepository;
+  private final TowerCarrierPlatformPolicyRuleRepository towerCarrierPlatformPolicyRuleRepository;
+
+  private final ContentByAgePolicyRuleRepository contentByAgePolicyRuleRepository;
+
+  private final TowerCarrierPlatformDataMessagePublisher towerCarrierPlatformDataMessagePublisher;
+
+  private final ContentByAgeDataMessagePublisher contentByAgeDataMessagePublisher;
+
+  private final PolicyServiceHelper policyServiceHelper;
 
   @Autowired
-  private ContentByAgePolicyRuleRepository contentByAgePolicyRuleRepository;
+  public PolicyService(TowerCarrierPlatformPolicyRuleRepository towerCarrierPlatformPolicyRuleRepository,
+                       ContentByAgePolicyRuleRepository contentByAgePolicyRuleRepository,
+                       TowerCarrierPlatformDataMessagePublisher towerCarrierPlatformDataMessagePublisher,
+                       ContentByAgeDataMessagePublisher contentByAgeDataMessagePublisher,
+                       PolicyServiceHelper policyServiceHelper) {
 
-//  @Autowired
-//  private TowerCarrierPlatformDataConsumer towerCarrierPlatformDataConsumer;
+    this.towerCarrierPlatformPolicyRuleRepository =
+            towerCarrierPlatformPolicyRuleRepository;
+    this.contentByAgePolicyRuleRepository = contentByAgePolicyRuleRepository;
+    this.towerCarrierPlatformDataMessagePublisher =
+            towerCarrierPlatformDataMessagePublisher;
+    this.contentByAgeDataMessagePublisher = contentByAgeDataMessagePublisher;
+    this.policyServiceHelper = policyServiceHelper;
 
-  @Autowired
-  private TowerCarrierPlatformDataMessagePublisher towerCarrierPlatformDataMessagePublisher;
-
-//  @Autowired
-//  private ContentByAgeDataConsumer contentByAgeDataConsumer;
-
-  @Autowired
-  private ContentByAgeDataMessagePublisher contentByAgeDataMessagePublisher;
-
-  @Autowired
-  private PolicyServiceHelper policyServiceHelper;
+  }
 
   public TowerCarrierPlatformPolicyRule
-    createNewTowerCarrierPlatformPolicyRule(TowerCarrierPlatformPolicyRule tcppr)
+
+    createNewTowerCarrierPlatformPolicyRule(TowerCarrierPlatformPolicyRule tcpPolicyRule)
           throws Exception {
 
-    List<TowerCarrierPlatformPolicyRuleDAO> policyRuleDAOList =
+    Optional<TowerCarrierPlatformPolicyRuleDAO> policyRuleDAO =
             towerCarrierPlatformPolicyRuleRepository
                     .findByCompositePrimaryKey(
-                            tcppr.getTowerName(),
-                            tcppr.getCarrierName(),
-                            tcppr.getPlatformName());
+                            tcpPolicyRule.getTowerName(),
+                            tcpPolicyRule.getCarrierName(),
+                            tcpPolicyRule.getPlatformName());
 
-    if(policyRuleDAOList.size() == 0) {
+    if(!policyRuleDAO.isPresent()) {
 
       TowerCarrierPlatformPolicyRuleDAO oldDAO =
-              policyServiceHelper.convertToDAO(tcppr);
+              policyServiceHelper.convertToDAO(tcpPolicyRule);
       oldDAO.setCreatedTimeStamp(new Date());
+      oldDAO.setId(UUID.randomUUID());
 
       TowerCarrierPlatformPolicyRuleDAO newDAO =
               towerCarrierPlatformPolicyRuleRepository.insert(oldDAO);
 
-      TowerCarrierPlatformData tcpd = new TowerCarrierPlatformData(
+      TowerCarrierPlatformData tcpData = new TowerCarrierPlatformData(
               newDAO.getKeyDAO().getTowerName(),
               newDAO.getKeyDAO().getCarrierName(),
               newDAO.getKeyDAO().getPlatformName(),
@@ -75,39 +86,61 @@ public class PolicyService
       );
 
       Message<TowerCarrierPlatformData> message =
-              MessageBuilder.withPayload(tcpd)
+              MessageBuilder.withPayload(tcpData)
               .setHeader(KafkaHeaders.MESSAGE_KEY, newDAO.getKeyDAO().getTowerName())
               .setHeader(KafkaHeaders.TOPIC, towerCarrierPlatformDataMessagePublisher.getTopic())
               .build();
       towerCarrierPlatformDataMessagePublisher.sendMessage(message);
-//      towerCarrierPlatformDataConsumer.getTowerCarrierPlatformDataLatch().await(10,
-//              TimeUnit.SECONDS);
 
       return policyServiceHelper.convertToEntity(newDAO);
     }
     else
-      throw new Exception("Rule exists for {" + tcppr.getTowerName() +", " + tcppr.getCarrierName() + ", " + tcppr.getPlatformName() +"}");
+      throw new DuplicateResourceException("Rule exists for {" + tcpPolicyRule.getTowerName() +", " + tcpPolicyRule.getCarrierName() + ", " + tcpPolicyRule.getPlatformName() +"}");
+  }
+
+  public Optional<TowerCarrierPlatformPolicyRule> findTowerCarrierPlatformPolicyRule(UUID id) {
+    Optional<TowerCarrierPlatformPolicyRuleDAO> optionalPolicyRuleDAO =
+              towerCarrierPlatformPolicyRuleRepository.findById(id);
+
+    if(optionalPolicyRuleDAO.isPresent()) {
+      TowerCarrierPlatformPolicyRule policyRule =
+              policyServiceHelper.convertToEntity(optionalPolicyRuleDAO.get());
+
+      return Optional.of(policyRule);
+    }
+    else {
+      return Optional.empty();
+    }
 
   }
 
-  public ContentByAgePolicyRule createNewContentByAgePolicyRule(ContentByAgePolicyRule cbapr)
+  public List<TowerCarrierPlatformPolicyRule> findAllTowerCarrierPlatformPolicyRules() {
+
+    List<TowerCarrierPlatformPolicyRuleDAO> daoList =
+      towerCarrierPlatformPolicyRuleRepository.findAll();
+
+    return daoList.stream().map( policyServiceHelper::convertToEntity).collect(Collectors.toList());
+
+  }
+
+  public ContentByAgePolicyRule createNewContentByAgePolicyRule(ContentByAgePolicyRule cbaPolicyRule)
     throws Exception {
 
     List<ContentByAgePolicyRuleDAO> policyRuleDAOList =
       contentByAgePolicyRuleRepository.findByAgeRange(
-              cbapr.getStartAge(), cbapr.getEndAge());
+              cbaPolicyRule.getStartAge(), cbaPolicyRule.getEndAge());
 
     if(policyRuleDAOList.size() == 0) {
 
       ContentByAgePolicyRuleDAO oldDAO =
-              policyServiceHelper.convertToDAO(cbapr);
+              policyServiceHelper.convertToDAO(cbaPolicyRule);
       oldDAO.setId(UUID.randomUUID());
       oldDAO.setCreatedTimeStamp(new Date());
 
       ContentByAgePolicyRuleDAO persistedDAO =
               contentByAgePolicyRuleRepository.insert(oldDAO);
 
-      ContentByAgeData cyad = new ContentByAgeData(
+      ContentByAgeData cyaData = new ContentByAgeData(
               persistedDAO.getId(),
               persistedDAO.getStartAge(),
               persistedDAO.getEndAge(),
@@ -115,19 +148,43 @@ public class PolicyService
       );
 
       Message<ContentByAgeData> message =
-              MessageBuilder.withPayload(cyad)
+              MessageBuilder.withPayload(cyaData)
                       .setHeader(KafkaHeaders.MESSAGE_KEY,
                               persistedDAO.getId().toString())
                       .setHeader(KafkaHeaders.TOPIC,
                               contentByAgeDataMessagePublisher.getTopic())
                       .build();
       contentByAgeDataMessagePublisher.sendMessage(message);
-//      contentByAgeDataConsumer.getContentByAgeDataLatch().await(10,
-//              TimeUnit.SECONDS);
 
       return policyServiceHelper.convertToEntity(persistedDAO);
     }
     else
-      throw new Exception("Rule exists for {" + cbapr.getStartAge() +" ," + cbapr.getEndAge() + " ," + cbapr.getContentSet() +"}");
+      throw new Exception("Rule exists for {" + cbaPolicyRule.getStartAge() +" ," + cbaPolicyRule.getEndAge() + " ," + cbaPolicyRule.getContentSet() +"}");
+
+  }
+
+  public Optional<ContentByAgePolicyRule> findContentByAgePolicyRule(UUID id) {
+    Optional<ContentByAgePolicyRuleDAO> optionalPolicyRuleDAO =
+            contentByAgePolicyRuleRepository.findById(id);
+
+    if(optionalPolicyRuleDAO.isPresent()) {
+      ContentByAgePolicyRule policyRule =
+              policyServiceHelper.convertToEntity(optionalPolicyRuleDAO.get());
+
+      return Optional.of(policyRule);
+    }
+    else {
+      return Optional.empty();
+    }
+
+  }
+
+  public List<ContentByAgePolicyRule> findAllContentByAgePolicyRules() {
+
+    List<ContentByAgePolicyRuleDAO> daoList =
+            contentByAgePolicyRuleRepository.findAll();
+
+    return daoList.stream().map(policyServiceHelper::convertToEntity).collect(Collectors.toList());
+
   }
 }

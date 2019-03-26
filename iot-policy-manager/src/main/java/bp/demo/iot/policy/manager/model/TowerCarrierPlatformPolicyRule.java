@@ -3,9 +3,12 @@ package bp.demo.iot.policy.manager.model;
 import java.io.Serializable;
 import java.util.Date;
 import java.util.Objects;
+import java.util.UUID;
 
 public class TowerCarrierPlatformPolicyRule
   implements Serializable {
+
+  private UUID id;
 
   private String towerName;
 
@@ -25,12 +28,9 @@ public class TowerCarrierPlatformPolicyRule
 
   public TowerCarrierPlatformPolicyRule() {}
 
-  public TowerCarrierPlatformPolicyRule(String towerName, String carrierName,
-                                        String platformName, boolean active,
-                                        String createdBy,
-                                        Date createdTimeStamp,
-                                        String modifiedBy,
-                                        Date modifiedTimeStamp) {
+  public TowerCarrierPlatformPolicyRule(UUID id, String towerName,
+                                        String carrierName, String platformName, boolean active, String createdBy, Date createdTimeStamp, String modifiedBy, Date modifiedTimeStamp) {
+    this.id = id;
     this.towerName = towerName;
     this.carrierName = carrierName;
     this.platformName = platformName;
@@ -39,6 +39,14 @@ public class TowerCarrierPlatformPolicyRule
     this.createdTimeStamp = createdTimeStamp;
     this.modifiedBy = modifiedBy;
     this.modifiedTimeStamp = modifiedTimeStamp;
+  }
+
+  public UUID getId() {
+    return id;
+  }
+
+  public void setId(UUID id) {
+    this.id = id;
   }
 
   public String getTowerName() {
@@ -110,27 +118,18 @@ public class TowerCarrierPlatformPolicyRule
     if (this == o) return true;
     if (o == null || getClass() != o.getClass()) return false;
     TowerCarrierPlatformPolicyRule that = (TowerCarrierPlatformPolicyRule) o;
-    return getActive() == that.getActive() &&
-            getTowerName().equals(that.getTowerName()) &&
-            getCarrierName().equals(that.getCarrierName()) &&
-            getPlatformName().equals(that.getPlatformName());
+    return getActive() == that.getActive() && getTowerName().equals(that.getTowerName()) && getCarrierName().equals(that.getCarrierName()) && getPlatformName().equals(that.getPlatformName()) && Objects.equals(getId(), that.getId()) && getCreatedBy().equals(that.getCreatedBy()) && getCreatedTimeStamp().equals(that.getCreatedTimeStamp()) && Objects.equals(getModifiedBy(), that.getModifiedBy()) && Objects.equals(getModifiedTimeStamp(), that.getModifiedTimeStamp());
   }
 
   @Override
   public int hashCode() {
-    return Objects.hash(getTowerName(), getCarrierName(), getPlatformName(), getActive());
+    return Objects.hash(getTowerName(), getCarrierName(), getPlatformName(),
+            getId(), getActive(), getCreatedBy(), getCreatedTimeStamp(),
+            getModifiedBy(), getModifiedTimeStamp());
   }
 
   @Override
   public String toString() {
-    return "TowerCarrierPlatformPolicyRule{" +
-            "towerName='" + towerName + '\'' +
-            ", carrierName='" + carrierName + '\'' +
-            ", platformName='" + platformName + '\'' +
-            ", active=" + active +
-            ", createdBy='" + createdBy + '\'' +
-            ", createdTimeStamp=" + createdTimeStamp +
-            ", modifiedBy='" + modifiedBy + '\'' +
-            ", modifiedTimeStamp=" + modifiedTimeStamp + '}';
+    return "TowerCarrierPlatformPolicyRule{" + "id=" + id + ", towerName='" + towerName + '\'' + ", carrierName='" + carrierName + '\'' + ", platformName='" + platformName + '\'' + ", active=" + active + ", createdBy='" + createdBy + '\'' + ", createdTimeStamp=" + createdTimeStamp + ", modifiedBy='" + modifiedBy + '\'' + ", modifiedTimeStamp=" + modifiedTimeStamp + '}';
   }
 }
