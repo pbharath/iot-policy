@@ -5,10 +5,10 @@ import org.springframework.data.cassandra.core.mapping.Column;
 import org.springframework.data.cassandra.core.mapping.PrimaryKey;
 import org.springframework.data.cassandra.core.mapping.Table;
 
-import javax.validation.constraints.PastOrPresent;
 import java.io.Serializable;
 import java.util.Date;
 import java.util.Objects;
+import java.util.UUID;
 
 @Table("Tower_Carrier_Platform_Policy_Rule")
 public class TowerCarrierPlatformPolicyRuleDAO
@@ -16,6 +16,9 @@ public class TowerCarrierPlatformPolicyRuleDAO
 
   @PrimaryKey
   private TowerCarrierPlatformPolicyRuleKeyDAO keyDAO;
+
+  @Column(value = "id")
+  private UUID id;
 
   @Column(value = "is_active")
   private boolean isActive;
@@ -32,15 +35,12 @@ public class TowerCarrierPlatformPolicyRuleDAO
   @Column(value = "modified_timeStamp")
   private Date modifiedTimeStamp;
 
+
   public TowerCarrierPlatformPolicyRuleDAO(){}
 
-  public TowerCarrierPlatformPolicyRuleDAO(
-          TowerCarrierPlatformPolicyRuleKeyDAO keyDAO,
-          boolean isActive, String createdBy,
-          @PastOrPresent Date createdTimeStamp,
-          String modifiedBy,
-          @PastOrPresent Date modifiedTimeStamp) {
+  public TowerCarrierPlatformPolicyRuleDAO(TowerCarrierPlatformPolicyRuleKeyDAO keyDAO, UUID id, boolean isActive, String createdBy, Date createdTimeStamp, String modifiedBy, Date modifiedTimeStamp) {
     this.keyDAO = keyDAO;
+    this.id = id;
     this.isActive = isActive;
     this.createdBy = createdBy;
     this.createdTimeStamp = createdTimeStamp;
@@ -56,6 +56,14 @@ public class TowerCarrierPlatformPolicyRuleDAO
     this.keyDAO = keyDAO;
   }
 
+  public UUID getId() {
+    return id;
+  }
+
+  public void setId(UUID id) {
+    this.id = id;
+  }
+
   public boolean getActive() {
     return isActive;
   }
@@ -63,6 +71,7 @@ public class TowerCarrierPlatformPolicyRuleDAO
   public void setActive(boolean active) {
     isActive = active;
   }
+
 
   public String getCreatedBy() {
     return createdBy;
@@ -114,12 +123,7 @@ public class TowerCarrierPlatformPolicyRuleDAO
 
   @Override
   public String toString() {
-    return "TowerCarrierPlatformPolicyRuleDAO{" +
-            "keyDAO=" + keyDAO + ", " +
-            "isActive=" + isActive +
-            ", createdBy='" + createdBy + '\'' + ", " +
-            "createdTimeStamp=" + createdTimeStamp +
-            ", modifiedBy='" + modifiedBy + '\'' +
-            ", modifiedTimeStamp=" + modifiedTimeStamp + '}';
+    return "TowerCarrierPlatformPolicyRuleDAO{" + "keyDAO=" + keyDAO + ", " +
+            "isActive=" + isActive + ", id=" + id + ", createdBy='" + createdBy + '\'' + ", createdTimeStamp=" + createdTimeStamp + ", modifiedBy='" + modifiedBy + '\'' + ", modifiedTimeStamp=" + modifiedTimeStamp + '}';
   }
 }
