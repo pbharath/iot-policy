@@ -19,11 +19,14 @@ import org.springframework.messaging.support.MessageBuilder;
 import org.springframework.stereotype.Service;
 
 import java.io.Serializable;
+import java.time.OffsetDateTime;
+import java.time.ZoneOffset;
 import java.util.Date;
 import java.util.List;
 import java.util.Optional;
 import java.util.UUID;
 import java.util.stream.Collectors;
+import java.util.stream.Stream;
 
 @Service
 public class PolicyService
@@ -57,7 +60,6 @@ public class PolicyService
   }
 
   public TowerCarrierPlatformPolicyRule
-
     createNewTowerCarrierPlatformPolicyRule(TowerCarrierPlatformPolicyRule tcpPolicyRule)
           throws Exception {
 
@@ -72,7 +74,7 @@ public class PolicyService
 
       TowerCarrierPlatformPolicyRuleDAO oldDAO =
               policyServiceHelper.convertToDAO(tcpPolicyRule);
-      oldDAO.setCreatedTimeStamp(new Date());
+      oldDAO.setCreatedTimeStamp(Date.from(OffsetDateTime.now(ZoneOffset.UTC).toInstant()));
       oldDAO.setId(UUID.randomUUID());
 
       TowerCarrierPlatformPolicyRuleDAO newDAO =
@@ -126,16 +128,16 @@ public class PolicyService
   public ContentByAgePolicyRule createNewContentByAgePolicyRule(ContentByAgePolicyRule cbaPolicyRule)
     throws Exception {
 
-    List<ContentByAgePolicyRuleDAO> policyRuleDAOList =
+    Stream<ContentByAgePolicyRuleDAO> policyRuleDAOStream =
       contentByAgePolicyRuleRepository.findByAgeRange(
               cbaPolicyRule.getStartAge(), cbaPolicyRule.getEndAge());
 
-    if(policyRuleDAOList.size() == 0) {
+    if(policyRuleDAOStream.count() == 0) {
 
       ContentByAgePolicyRuleDAO oldDAO =
               policyServiceHelper.convertToDAO(cbaPolicyRule);
       oldDAO.setId(UUID.randomUUID());
-      oldDAO.setCreatedTimeStamp(new Date());
+      oldDAO.setCreatedTimeStamp(Date.from(OffsetDateTime.now(ZoneOffset.UTC).toInstant()));
 
       ContentByAgePolicyRuleDAO persistedDAO =
               contentByAgePolicyRuleRepository.insert(oldDAO);

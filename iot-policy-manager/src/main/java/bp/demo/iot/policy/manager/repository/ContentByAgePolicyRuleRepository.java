@@ -5,9 +5,9 @@ import org.springframework.data.cassandra.repository.CassandraRepository;
 import org.springframework.data.cassandra.repository.Query;
 import org.springframework.stereotype.Repository;
 
-import java.util.List;
 import java.util.Optional;
 import java.util.UUID;
+import java.util.stream.Stream;
 
 @Repository
 public interface ContentByAgePolicyRuleRepository
@@ -15,7 +15,7 @@ public interface ContentByAgePolicyRuleRepository
 
   @Query("SELECT * FROM IotPolicySpace.Content_By_Age_Policy_Rule " + "WHERE " +
           "start_age>=?0 AND end_age<=?1")
-  List<ContentByAgePolicyRuleDAO> findByAgeRange(int startAge, int endAge);
+  Stream<ContentByAgePolicyRuleDAO> findByAgeRange(int startAge, int endAge);
 
   @Query("SELECT * FROM IotPolicySpace.Content_By_Age_Policy_Rule WHERE id=?0")
   Optional<ContentByAgePolicyRuleDAO> findById(final UUID id);

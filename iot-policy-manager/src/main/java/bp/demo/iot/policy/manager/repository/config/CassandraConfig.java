@@ -39,7 +39,7 @@ public class CassandraConfig {
   private Environment environment;
 
   @Bean
-  public CassandraClusterFactoryBean cluster() {
+  public CassandraClusterFactoryBean testCluster() {
     CassandraClusterFactoryBean cluster = new CassandraClusterFactoryBean();
 
     String cassandraHost = environment.getProperty(CASSANDRA_HOST_PROPERTY);
@@ -61,37 +61,37 @@ public class CassandraConfig {
   }
 
   @Bean
-  public CassandraMappingContext cassandraMapping() {
+  public CassandraMappingContext testCassandraMapping() {
     return new CassandraMappingContext();
   }
 
   @Bean
-  protected String getKeyspaceName() {
+  protected String getTestKeyspaceName() {
     return environment.getProperty(CASSANDRA_KEYSPACE_PROPERTY);
   }
 
   @Bean
-  public CassandraMappingContext mappingContext() {
+  public CassandraMappingContext testMappingContext() {
 
     CassandraMappingContext mappingContext = new CassandraMappingContext();
-    mappingContext.setUserTypeResolver(new SimpleUserTypeResolver(cluster().getObject(), getKeyspaceName()));
+    mappingContext.setUserTypeResolver(new SimpleUserTypeResolver(testCluster().getObject(), getTestKeyspaceName()));
 
     return mappingContext;
   }
 
   @Bean
-  public CassandraConverter converter() {
-    return new MappingCassandraConverter(mappingContext());
+  public CassandraConverter testConverter() {
+    return new MappingCassandraConverter(testMappingContext());
   }
 
   @Bean("IotPolicySpaceSession")
-  public CassandraSessionFactoryBean session()
+  public CassandraSessionFactoryBean testSession()
           throws Exception {
 
     CassandraSessionFactoryBean session = new CassandraSessionFactoryBean();
-    session.setCluster(cluster().getObject());
-    session.setKeyspaceName(getKeyspaceName());
-    session.setConverter(converter());
+    session.setCluster(testCluster().getObject());
+    session.setKeyspaceName(getTestKeyspaceName());
+    session.setConverter(testConverter());
     session.setSchemaAction(SchemaAction.NONE);
 
     return session;
@@ -100,7 +100,7 @@ public class CassandraConfig {
   @Bean("IotPolicySpaceCassandraTemplate")
   public CassandraOperations cassandraTemplate()
           throws Exception {
-    return new CassandraTemplate(session().getObject());
+    return new CassandraTemplate(testSession().getObject());
   }
 
 
