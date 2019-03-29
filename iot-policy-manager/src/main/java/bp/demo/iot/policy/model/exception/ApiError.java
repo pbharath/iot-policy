@@ -7,9 +7,12 @@ import java.util.List;
 
 public class ApiError {
 
-  private final HttpStatus status;
-  private final String message;
-  private final List<String> errors;
+  private HttpStatus status;
+  private String message;
+  private List<String> errors;
+
+  public ApiError() {
+  }
 
   public ApiError(HttpStatus status, String message, List<String> errors) {
     super();

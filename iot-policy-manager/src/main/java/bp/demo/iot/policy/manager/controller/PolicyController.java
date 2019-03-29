@@ -1,9 +1,9 @@
 package bp.demo.iot.policy.manager.controller;
 
+import bp.demo.iot.policy.manager.service.PolicyService;
 import bp.demo.iot.policy.manager.exception.DuplicateResourceException;
 import bp.demo.iot.policy.manager.model.ContentByAgePolicyRule;
 import bp.demo.iot.policy.manager.model.TowerCarrierPlatformPolicyRule;
-import bp.demo.iot.policy.manager.service.PolicyService;
 import bp.demo.iot.policy.model.exception.ApiError;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.http.HttpStatus;
@@ -44,7 +44,7 @@ public class PolicyController {
               .buildAndExpand(policyRule.getId())
               .toUri();
 
-      return ResponseEntity.created(uri).body(policyRule);
+      return ResponseEntity.created(uri).body(policyRule.getId());
     }
     catch(DuplicateResourceException dre) {
       ApiError apiError = new ApiError(HttpStatus.CONFLICT,
