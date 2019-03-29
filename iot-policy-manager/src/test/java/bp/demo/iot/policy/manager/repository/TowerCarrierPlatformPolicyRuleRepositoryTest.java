@@ -63,7 +63,9 @@ public class TowerCarrierPlatformPolicyRuleRepositoryTest {
               String carrierNameArg = (String) args[1];
               String platformNameArg = (String) args[2];
 
-              if (towerNameArg.equalsIgnoreCase(towerName) && carrierNameArg.equalsIgnoreCase(carrierName) && platformNameArg.equalsIgnoreCase(platformName)) {
+              if (towerNameArg.equalsIgnoreCase(towerName) &&
+                  carrierNameArg.equalsIgnoreCase(carrierName) &&
+                  platformNameArg.equalsIgnoreCase(platformName)) {
                 return Optional.of(new TowerCarrierPlatformPolicyRuleDAO());
               } else {
                 return Optional.empty();
@@ -122,7 +124,6 @@ public class TowerCarrierPlatformPolicyRuleRepositoryTest {
         return nonExistingPolicyRuleDAO;
       }
     });
-
 
     when(repository.insert(any(TowerCarrierPlatformPolicyRuleDAO.class)))
             .thenReturn(any(TowerCarrierPlatformPolicyRuleDAO.class));
